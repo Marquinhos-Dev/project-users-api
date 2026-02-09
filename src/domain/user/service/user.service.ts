@@ -8,6 +8,8 @@ import {
 } from '../interfaces/user.service.interface';
 import { IUser, UserRelations } from '../interfaces/user.interface';
 import { User } from '../user.entity';
+import * as bcrypt from 'bcryptjs';
+import * as jwt from 'jsonwebtoken';
 
 export class UserService implements IUserService {
     private userRepositoryRead: IUserRepositoryRead;
@@ -28,19 +30,69 @@ export class UserService implements IUserService {
     ): Promise<IUser>
     {
         try {
-            const existingUser = await this.
-            userRepositoryRead.findUserByEmail(
+            const existingUser = await this.userRepositoryRead.findUserByEmail(
                 params.email,
             );
             if (existingUser) {
                 throw new Error('A user with this email already exists');
             };
-            const userEntity = new User(params);
+
+            // === ALTERAÇÃO AQUI ===
+            // Criptografa a senha antes de criar a entidade/salvar
+            const hashedPassword = await bcrypt.hash(params.password, 10);
+            
+            // Cria a entidade com a senha hasheada
+            const userEntity = new User({
+                ...params,
+                password: hashedPassword
+            });
+            // ======================
+
             return await this.userRepositoryWrite.createUser(userEntity);
         } catch (error) {
             throw new Error(`Error creating user: ${(error as Error).message}`);
         };
     };
+
+    /**
+     * Authenticate a user
+     * @param email - User email
+     * @param password - User password (plain text)
+     * @returns Object containing user and token
+     */
+    async login(email: string, password: string): Promise<{ user: IUser, token: string }> {
+        try {
+            // 1. Busca o usuário pelo e-mail (usando seu método existente ou repo direto)
+            const user = await this.userRepositoryRead.findUserByEmail(email);
+            
+            if (!user) {
+                throw new Error('Invalid email or password');
+            }
+
+            // 2. Compara a senha enviada com a hash salva no banco
+            // IMPORTANTE: Isso assume que você salvou a senha como hash no createUser
+            const isPasswordValid = await bcrypt.compare(password, user.password);
+
+            if (!isPasswordValid) {
+                throw new Error('Invalid email or password');
+            }
+
+            // 3. Gera o Token JWT
+            const token = jwt.sign(
+                { id: user.id, email: user.email }, 
+                'SEU_SECRET_KEY', // Substitua por process.env.JWT_SECRET
+                { expiresIn: '1h' }
+            );
+
+            // Retorna o usuário e o token (é boa prática remover a senha do objeto de retorno)
+            // user.password = undefined; // Opcional: remover a senha do objeto retornado
+            
+            return { user, token };
+
+        } catch (error) {
+            throw new Error((error as Error).message);
+        }
+    }
 
     /**
      * Get a user by ID

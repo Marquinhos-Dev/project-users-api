@@ -14,8 +14,10 @@
     "migration:revert": "npm run typeorm -- migration:revert"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.10.1",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
@@ -27,11 +29,13 @@
   "license": "ISC",
   "repository": "",
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^16.4.7",
     "express": "^4.19.2",
     "express-openapi-validator": "^4.13.8",
     "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.3",
     "pg": "^8.16.3",
     "reflect-metadata": "^0.2.2",
     "traceability": "^3.2.2",

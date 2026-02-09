@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, RequestHandler } from 'express';
 import { IController } from '../../domain/server/interfaces/IController';
 import { UserService } from '../../domain/user/service/user.service';
 import { IUser } from 'src/domain/user/interfaces/user.interface';
@@ -6,14 +6,23 @@ import { IUser } from 'src/domain/user/interfaces/user.interface';
 export class UserController implements IController {
     router: Router;
     private readonly userService: UserService;
+    private authMiddlware: RequestHandler;
 
-    constructor(userService: UserService) {
+    constructor(
+        userService: UserService,
+        authMiddlware: RequestHandler
+    ) {
         this.userService = userService;
+        this.authMiddlware = authMiddlware;
         this.router = Router();
         this.initRoutes();
     };
 
     initRoutes() {
+        this.router.post('/login', this.login);
+
+        // this.router.use(authMiddlware)
+
         this.router.get('/users', this.getUsers);
         this.router.get('/users/:id', this.getUserById);
         this.router.post('/users', this.createUser);
@@ -39,6 +48,21 @@ export class UserController implements IController {
         } catch (error) {
             res.status(500).json({ error: (error as Error).message });
         };
+    };
+
+    login = async (
+        req: Request,
+        res: Response
+    ): Promise<void> => {
+        const { email, password } = req.body;
+
+        try {
+            const result = await this.userService.login(email, password);
+            res.status(200).json(result);
+        } catch (error) {
+            // Retornamos 401 (Unauthorized) para falhas de login
+            res.status(401).json({ error: (error as Error).message });
+        }
     };
 
     /**

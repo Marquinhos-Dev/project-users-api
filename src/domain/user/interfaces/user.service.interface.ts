@@ -18,7 +18,26 @@ export interface IParamsUserService {
     userRepositoryWrite: IUserRepositoryWrite;
 };
 
+/**
+ * Interface para a resposta do Login
+ * Contém o usuário encontrado e o token gerado
+ */
+export interface ILoginResponse {
+    user: IUser;
+    token: string;
+}
+
 export interface IUserService {
+    /**
+     * Realiza o login do usuário
+     * @param email Email do usuário
+     * @param password Senha (texto plano)
+     */
+    login(
+        email: string, 
+        password: string
+    ): Promise<ILoginResponse>;
+
     createUser(
         params: IParamsCreateUser
     ): Promise<IUser>;
